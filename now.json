@@ -8,23 +8,25 @@
   ],
   "routes": [
     {
-      "src": "/",
+      "src": "/status",
       "dest": "/index.js",
       "methods": ["GET"]
     },
     {
-      "src": "/lights-status",
+      "src": "/lights/on",
       "dest": "/index.js",
-      "methods": ["GET"]
+      "headers": {
+        "Access-Control-Allow-Origin": "*"
+      },
+      "methods": ["POST", "OPTIONS"]
     },
     {
-      "src": "/lights-on",
+      "src": "/lights/off",
       "dest": "/index.js",
-      "methods": ["GET"]
-    },{
-      "src": "/lights-off",
-      "dest": "/index.js",
-      "methods": ["GET"]
+      "headers": {
+        "Access-Control-Allow-Origin": "*"
+      },
+      "methods": ["POST", "OPTIONS"]
     }
   ]
 }

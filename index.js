@@ -1,11 +1,22 @@
 const express = require('express')
+const bodyParser = require('body-parser')
 const axios = require('axios').default;
 const cors = require('cors')
 require('dotenv').config()
 const app = express()
-const port = 3000
+const port = 5000
 
 app.use(cors())
+app.use(bodyParser.json())
+
+app.use('/lights/', (req, res, next) => {
+    let password = req.body.pass
+    if (password !== process.env.PASSWORD) {
+        res.json({message: "Invalid password"})
+        return
+    }
+    next()
+})
 
 const turnOffAfterMinutes = 5
 let timeToTurnOff = -1
@@ -18,6 +29,15 @@ const turnLightsOn = async () => {
     return await axios.get(process.env.LIGHTS_ON_URL)
 }
 
+const turnLightsOffIn = (minutes) => {
+    console.log(minutes)
+    timeToTurnOff = new Date().getTime() + (1000 * 60 * minutes)
+}
+
+const dateTurningOff = () => {
+    return new Date(timeToTurnOff)
+}
+
 setInterval(async () => {
     if (timeToTurnOff === -1) return
     const currentTime = new Date().getTime()
@@ -27,29 +47,34 @@ setInterval(async () => {
         console.log("Turning lights off after timer.")
         timeToTurnOff = -1
     }
-},1000);
+}, 1000);
 
-app.get('/', (req, res) => {
-    res.send('Server is online.')
-})
-
-app.get("/lights-status", async (req, res) => {
+app.get("/status", async (req, res) => {
     if (timeToTurnOff === -1) {
-        res.send("Lights are not on.")
+        res.json({status: "lights-off"})
         return
     }
-    res.send("Turning off: " + new Date(timeToTurnOff))
+    res.json({status: "lights-on", turningOff: dateTurningOff()})
 })
 
-app.get("/lights-off", async (req, res) => {
+app.post("/lights/off", async (req, res) => {
     await turnLightsOff()
-    res.send("Lights are now turned off")
+    res.json({status: "lights-off", message: "Lights have been turned off."})
 })
 
-app.get('/lights-on', async (req, res) => {
+
+app.post('/lights/on', async (req, res) => {
+    let minutes = req.body.minutes
+    if (minutes === undefined) minutes = timeToTurnOff
     await turnLightsOn()
-    timeToTurnOff = new Date().getTime() + (1000 * 60 * turnOffAfterMinutes)
-    res.send("Lights are now on. Current Time: " + new Date() + " Turning off @ " + new Date(timeToTurnOff))
+    const turningOff = new Date(timeToTurnOff)
+    turnLightsOffIn(minutes)
+    res.json({
+        status: "lights-on",
+        currentTime: new Date(),
+        turningOff,
+        message: "Lights have been turned on\n Turning off @ " + turningOff
+    })
 })
 
 app.listen(port, () => console.log(`My app is listening at ${port}`))
