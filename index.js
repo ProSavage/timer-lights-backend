@@ -65,7 +65,7 @@ app.post("/lights/off", async (req, res) => {
 
 app.post('/lights/on', async (req, res) => {
     let minutes = req.body.minutes
-    if (minutes === undefined) minutes = timeToTurnOff
+    if (minutes === undefined) minutes = turnOffAfterMinutes
     await turnLightsOn()
     const turningOff = new Date(timeToTurnOff)
     turnLightsOffIn(minutes)
